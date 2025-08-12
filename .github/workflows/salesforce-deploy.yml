@@ -12,8 +12,13 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
       - name: Install Salesforce CLI
-        uses: forcedotcom/sfdx-action@v1.2.0
+        run: npm install -g sfdx-cli
 
       - name: Authenticate to Salesforce with JWT
         env:
@@ -27,5 +32,4 @@ jobs:
           sfdx auth:jwt:grant --clientid $SF_CLIENT_ID --jwtkeyfile server.key --username $SF_USERNAME --instanceurl $SF_INSTANCE_URL --setdefaultusername --setalias ci-org
 
       - name: Deploy Source to Salesforce
-        run: |
-          sfdx force:source:deploy -p force-app/main/default -w 10
+        run: sfdx force:source:deploy -p force-app/main/default -w 10
