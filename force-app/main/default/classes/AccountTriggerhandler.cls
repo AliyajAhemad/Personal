@@ -23,6 +23,5 @@ public class AccountTriggerhandler {
 
         List<Contact> contacts = [SELECT Id FROM Contact WHERE AccountId IN: accountIds];
 
-        System.debug('contacts : '+ contacts);
     }
 }
