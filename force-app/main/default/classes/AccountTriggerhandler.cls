@@ -20,5 +20,9 @@ public class AccountTriggerhandler {
         for(Account acc: updatedAccounts){
            accountIds.add(acc.Id);
         }
+
+        List<Contact> contacts = [SELECT Id FROM Contact WHERE AccountId IN: accountIds];
+
+        System.debug('contacts : '+ contacts);
     }
 }
