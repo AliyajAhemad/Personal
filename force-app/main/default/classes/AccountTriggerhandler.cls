@@ -21,7 +21,5 @@ public class AccountTriggerhandler {
            accountIds.add(acc.Id);
         }
 
-        List<Contact> contacts = [SELECT Id FROM Contact WHERE AccountId IN: accountIds];
-
     }
 }
