@@ -1,35 +1,20 @@
-name: Salesforce Deploy
+name: Validate Production Pull Request
 
 on:
-  push:
+  pull_request:
     branches:
       - main
+    paths:
+      - 'force-app/**'
 
 jobs:
-  deploy:
+  validate:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
-
-      - name: Install Node.js
-        uses: actions/setup-node@v3
+      - name: validate on Production
+        uses: jawills/sf-deploy@v1.0.0
         with:
-          node-version: '18'
+          SFDX_AUTH_URL: ${{ secrets.SF_AUTH_URL }}
+          DRY_RUN: true
 
-      - name: Install Salesforce CLI
-        run: npm install -g sfdx-cli
-
-      - name: Authenticate to Salesforce with JWT
-        env:
-          SF_CLIENT_ID: ${{ secrets.SF_CONSUMER_KEY }}
-          SF_USERNAME: ${{ secrets.SF_USERNAME }}
-          SF_JWT_KEY: ${{ secrets.SF_JWT_KEY }}
-          SF_INSTANCE_URL: ${{ secrets.SF_INSTANCE_URL }}
-        run: |
-          echo "$SF_JWT_KEY" > server.key
-          chmod 600 server.key
-          sfdx auth:jwt:grant --clientid $SF_CLIENT_ID --jwtkeyfile server.key --username $SF_USERNAME --instanceurl $SF_INSTANCE_URL --setdefaultusername --setalias ci-org
-
-      - name: Deploy Source to Salesforce
-        run: sfdx force:source:deploy -p force-app/main/default -w 10
