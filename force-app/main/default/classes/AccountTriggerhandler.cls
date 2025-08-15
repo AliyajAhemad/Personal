@@ -13,8 +13,6 @@ public class AccountTriggerhandler {
     }
 
     public static void afterUpdate(List<Account> updatedAccounts){
-        System.debug('is Batch Context? '+ isBatch);
-        if(isBatch) return;
-
+        System.debug('is Batch Context? '+ isBatch);        
     }
 }
