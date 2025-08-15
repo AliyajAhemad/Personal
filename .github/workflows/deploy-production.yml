@@ -1,9 +1,8 @@
 name: Close Production Pull Request
 
-# only trigger on pull request closed events
 on:
   pull_request:
-    types: [ closed ]
+    types: [closed]
     branches:
       - master
     paths:
@@ -11,7 +10,6 @@ on:
 
 jobs:
   merge_job:
-    # this job will only run if the PR has been merged
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
@@ -21,12 +19,11 @@ jobs:
         with:
           SFDX_AUTH_URL: ${{ secrets.SFDX_AUTH_URL }}
           DRY_RUN: false
-          TEST_LEVEL: RunLocalTests      
+          TEST_LEVEL: RunLocalTests
 
-close_job:
-  # this job will only run if the PR has been closed without being merged
-  if: github.event.pull_request.merged == false
-  runs-on: ubuntu-latest
-  steps:
-    - run: |
-        echo PR #${{ github.event.number }} has been closed without being merge
+  close_job:
+    if: github.event.pull_request.merged == false
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo PR #${{ github.event.number }} has been closed without being merged
