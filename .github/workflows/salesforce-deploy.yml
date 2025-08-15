@@ -13,8 +13,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: validate on Production
-        uses: jawills/sf-deploy@v1.0.0
+        uses: jawills/sf-deploy@v1.0   # use a valid tag
         with:
           SFDX_AUTH_URL: ${{ secrets.SF_AUTH_URL }}
           DRY_RUN: true
-
+          TEST_LEVEL: RunLocalTests
