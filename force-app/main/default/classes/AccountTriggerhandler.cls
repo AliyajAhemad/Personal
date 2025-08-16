@@ -9,6 +9,7 @@ public class AccountTriggerhandler {
         for(Account acc: updatedAccounts){
             acc.AccountSource = 'Web';
         }
+        System.debug('Updated Accounts: ' + updatedAccounts);
         
     }
 }
