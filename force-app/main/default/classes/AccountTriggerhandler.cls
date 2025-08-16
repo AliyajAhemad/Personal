@@ -11,14 +11,4 @@ public class AccountTriggerhandler {
         }
         
     }
-
-    public static void afterUpdate(List<Account> updatedAccounts){
-        System.debug('is Batch Context? '+ isBatch);
-        if(isBatch) return;
-
-        Set<Id> accountIds = new Set<Id>();
-        for(Account acc: updatedAccounts){
-           accountIds.add(acc.Id);
-        }
-    }
 }
