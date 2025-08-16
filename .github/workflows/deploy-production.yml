@@ -29,46 +29,120 @@
 #           echo PR #${{ github.event.number }} has been closed without being merged
 
 
-name: Deploy to sffnoobs environment on push to main
-on:
-  push:
-    branches: [ main ]
-    paths:
-      - 'force-app/**'
+  # name: Deploy to sffnoobs environment on push to main
+  # on:
+  #   push:
+  #     branches: [ main ]
+  #     paths:
+  #       - 'force-app/**'
 
-jobs:
-  Deploy-to-sffnoobs-environment:
-    runs-on: ubuntu-latest
-    environment: sffnoobs
-    steps:
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-      - name: 'Checkout source code'
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: '2'
-      
-      # Now Install Salesforce CLI
-      - name: 'Install sfdx'
-        run: npm install @salesforce/cli --global
+  # jobs:
+  #   Deploy-to-sffnoobs-environment:
+  #     runs-on: ubuntu-latest
+  #     environment: sffnoobs
+  #     steps:
+  #       - uses: actions/setup-node@v3
+  #         with:
+  #           node-version: '18'
+  #       - name: 'Checkout source code'
+  #         uses: actions/checkout@v3
+  #         with:
+  #           fetch-depth: '2'
+        
+  #       # Now Install Salesforce CLI
+  #       - name: 'Install sfdx'
+  #         run: npm install @salesforce/cli --global
 
-      - name: 'Installing sfdx git delta'
-        run: |
-          echo Y | sfdx plugins:install sfdx-git-delta
-          sfdx plugins
+  #       - name: 'Installing sfdx git delta'
+  #         run: |
+  #           echo Y | sfdx plugins:install sfdx-git-delta
+  #           sfdx plugins
 
-      - name: 'Create delta packages'
-        run: |
-          mkdir changed-sources
-          sf sgd source delta --to "HEAD" --from "HEAD~1" --output changed-sources/ --generate-delta --source force-app/
-          echo "[INFO] Diff generated"
+  #       - name: 'Create delta packages'
+  #         run: |
+  #           mkdir changed-sources
+  #           sf sgd source delta --to "HEAD" --from "HEAD~1" --output changed-sources/ --generate-delta --source force-app/
+  #           echo "[INFO] Diff generated"
 
-      - name: 'Deploy to environment with running all local tests'
-        run: |
-          echo "${{ secrets.JWT_SERVER_KEY }}" > server.key
-          sf org login jwt --username "${{ secrets.DEPLOYMENT_USER_NAME }}" --jwt-key-file server.key --client-id "${{ secrets.CONSUMER_KEY }}" --instance-url ${{ vars.INSTANCE_URL }} --set-default
-          sf project deploy start \
-          --source-dir changed-sources/force-app \
-          --test-level RunSpecifiedTests \
-          --tests AccountTriggerTest
+  #       - name: 'Deploy to environment with running all local tests'
+  #         run: |
+  #           echo "${{ secrets.JWT_SERVER_KEY }}" > server.key
+  #           sf org login jwt --username "${{ secrets.DEPLOYMENT_USER_NAME }}" --jwt-key-file server.key --client-id "${{ secrets.CONSUMER_KEY }}" --instance-url ${{ vars.INSTANCE_URL }} --set-default
+  #           sf project deploy start \
+  #           --source-dir changed-sources/force-app \
+  #           --test-level RunSpecifiedTests \
+  #           --tests AccountTriggerTest
+
+
+  name: Deploy to sffnoobs environment on PR merge to main
+
+  on:
+    pull_request:
+      types: [closed]
+      branches:
+        - main
+      paths:
+        - 'force-app/**'
+
+  jobs:
+    Deploy-to-sffnoobs-environment:
+      if: github.event.pull_request.merged == true
+      runs-on: ubuntu-latest
+      environment: sffnoobs
+      steps:
+        - uses: actions/setup-node@v3
+          with:
+            node-version: '18'
+
+        - name: 'Checkout source code'
+          uses: actions/checkout@v3
+          with:
+            fetch-depth: '2'
+
+        # Install Salesforce CLI
+        - name: 'Install sfdx'
+          run: npm install @salesforce/cli --global
+
+        - name: 'Installing sfdx git delta'
+          run: |
+            echo Y | sfdx plugins:install sfdx-git-delta
+            sfdx plugins
+
+        - name: 'Create delta packages'
+          run: |
+            mkdir changed-sources
+            sf sgd source delta --to "HEAD" --from "HEAD~1" --output changed-sources/ --generate-delta --source force-app/
+            echo "[INFO] Diff generated"
+
+        - name: 'Deploy and run relevant tests'
+          run: |
+            echo "${{ secrets.JWT_SERVER_KEY }}" > server.key
+            sf org login jwt \
+              --username "${{ secrets.DEPLOYMENT_USER_NAME }}" \
+              --jwt-key-file server.key \
+              --client-id "${{ secrets.CONSUMER_KEY }}" \
+              --instance-url ${{ vars.INSTANCE_URL }} \
+              --set-default
+
+            # Find changed Apex test classes
+            TEST_CLASSES=$(git diff --name-only HEAD~1 HEAD \
+              | grep 'force-app' \
+              | grep 'Test.cls' \
+              | sed 's/.*\///' \
+              | sed 's/.cls//' \
+              | paste -sd "," -)
+
+            if [ -z "$TEST_CLASSES" ]; then
+              echo "[INFO] No specific test classes found. Running all local tests."
+              sf project deploy start \
+                --source-dir changed-sources/force-app \
+                --test-level RunLocalTests
+            else
+              echo "[INFO] Running specified tests: $TEST_CLASSES"
+              sf project deploy start \
+                --source-dir changed-sources/force-app \
+                --test-level RunSpecifiedTests \
+                --tests "$TEST_CLASSES"
+            fi
+
+
