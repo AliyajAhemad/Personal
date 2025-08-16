@@ -13,7 +13,6 @@ public class AccountTriggerhandler {
     }
 
     public static void afterUpdate(List<Account> updatedAccounts){
-<<<<<<< HEAD
         System.debug('is Batch Context? '+ isBatch);
         if(isBatch) return;
 
@@ -25,8 +24,5 @@ public class AccountTriggerhandler {
         List<Contact> contacts = [SELECT Id FROM Contact WHERE AccountId IN: accountIds];
 
         System.debug('contacts : '+ contacts);
-=======
-        System.debug('is Batch Context? '+ isBatch);        
->>>>>>> cdbbb0636bebaf461bdad301ed9809895920da51
     }
 }
